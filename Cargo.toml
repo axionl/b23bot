@@ -1,0 +1,23 @@
+[package]
+name = "b23_wtf"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+curl = "0.4.38"
+derive = "1.0.0"
+derive_more = "0.99.16"
+futures = "0.3.16"
+frunk = "0.4.0"
+frunk_core = "0.4.0"
+log = "0.4.14"
+pretty_env_logger = "0.4.0"
+teloxide = { version = "0.5.1", features = ["auto-send", "macros", "frunk"] }
+tokio = { version = "1.10.0", features = ["rt-multi-thread", "macros"] }
+regex = "1.5.4"
+json = "0.12.4"
+
+[profile.release]
+lto = true
