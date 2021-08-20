@@ -1,32 +1,41 @@
 use curl::easy::Easy;
-use regex::Regex;
 use json;
+use regex::Regex;
 
 fn download(url: &String, dst: &mut Vec<u8>) {
     let mut easy = Easy::new();
 
     easy.useragent("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.7113.93 Safari/537.36").unwrap();
-    
+
     easy.url(url).unwrap();
 
     let mut transfer = easy.transfer();
 
-    transfer.write_function(|data| {
-        dst.extend_from_slice(data);
-        Ok(data.len())
-    }).unwrap();
+    transfer
+        .write_function(|data| {
+            dst.extend_from_slice(data);
+            Ok(data.len())
+        })
+        .unwrap();
 
     transfer.perform().unwrap();
 }
 
 pub fn get_aid(url: &String) -> Result<String, json::Error> {
     let mut dst: Vec<u8> = Vec::new();
+    let mut real_url = String::new();
+    let mut re = Regex::new(r"(http[|s]):(/+)([./[:alnum:]]*)").unwrap();
 
-    download(url, &mut dst);
+    for caps in re.captures_iter(url) {
+        real_url = caps.get(0).unwrap().as_str().to_string();
+        break;
+    }
+
+    download(&real_url, &mut dst);
 
     let msg = std::str::from_utf8(&dst).unwrap();
 
-    let re = Regex::new(r"(?i)(?:bilibili\.com/(?:video|bangumi/play)|b23\.tv|acg\.tv)/(?:(?P<bvid>bv\w+)|av(?P<aid>\d+)|ep(?P<epid>\d+)|ss(?P<ssid>\d+))").unwrap();
+    re = Regex::new(r"(?i)(?:bilibili\.com/(?:video|bangumi/play)|b23\.tv|acg\.tv)/(?:(?P<bvid>bv\w+)|av(?P<aid>\d+)|ep(?P<epid>\d+)|ss(?P<ssid>\d+))").unwrap();
 
     let mut bid = String::new();
 
@@ -35,7 +44,8 @@ pub fn get_aid(url: &String) -> Result<String, json::Error> {
         break;
     }
 
-    let api_url = format!("https://api.bilibili.com/x/web-interface/view?bvid={}", bid);
+    let api_url =
+        format!("https://api.bilibili.com/x/web-interface/view?bvid={}", bid);
 
     let mut json_data: Vec<u8> = Vec::new();
 
